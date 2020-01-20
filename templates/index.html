@@ -1,0 +1,71 @@
+{% extends 'layout.html' %}
+
+{% block script %} 
+<script src="{{ url_for('static', filename='js/trial3.js') }}" defer></script>
+{% endblock script %}
+
+{% block content %}
+
+<h1 id="main-header" data-next="{{ next_page }}">Star Wars Universe Planets</h1>
+<button class="btn btn-primary btn-success main-btn" id="prev">Prev Page</button>
+<button class="btn btn-primary btn-success main-btn" id="next">Next Page</button>
+<table class="tabel table-bordered table-striped main">
+    <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">diameter (km)</th>
+            <th scope="col">climate</th>
+            <th scope="col">terrain</th>
+            <th scope="col">surface water</th>
+            <th scope="col">population(millions)</th>
+            <th scope="col">residents</th>
+        </tr>
+    </thead>
+    <tbody id="main-content">
+        {% for each_list in results %}
+        <tr>
+            {% for each_element in each_list %}
+                {% if each_list.index(each_element) == each_list|length -1 %}
+                    {% if each_element[-1] != 0 %}
+                    <td data-residents="{{ each_element[0] }}"><button class="btn btn-secondary btn-sm">{{ each_element[-1] }}
+                            residents</button></td>
+                    {% else %}
+                    <td>No known Residents</td>
+                    {% endif %}
+                {% else %}
+                <td>{{ each_element }}</td>
+                {% endif %}
+            {% endfor %}
+            <!-- <td><button class="btn btn-info">vote</button></td> -->
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div id="modal-wrapper">
+    <div id="modal-content">
+        <div class="header-organizer">
+        <header id="modal-header"></header>
+        <span id="closeBtn">&times;</span>
+        </div>
+        <body id="modal-body">
+            <table class="tabel table-bordered table-striped main">
+                <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">height</th>
+                        <th scope="col">mass</th>
+                        <th scope="col">skin colour</th>
+                        <th scope="col">hair colour</th>
+                        <th scope="col">eye colour</th>
+                        <th scope="col">birth year</th>
+                        <th scope="col">gender</th>
+                    </tr>
+                </thead>
+                <tbody id="results"></tbody>
+            </table>
+        </body>
+    </div>
+</div>
+
+{%endblock content%}
