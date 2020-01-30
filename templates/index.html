@@ -1,4 +1,25 @@
 {% extends 'layout.html' %}
+{% block logged_in %}
+    {%  if not user%}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('register') }}">Register</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+          </li>
+    {% else %}
+         <li class="nav-item">
+{#            <button type="button" class="btn btn-light nav-link" data-toggle="modal" data-target="#my-modal">Voting</button>#}
+            <a class="nav-link voting" data-toggle="modal" data-target="#votes-data" id="voting">Voting</a>
+         </li>
+         <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+         </li>
+         <li class="nav-item logged">
+            <a class="nav-link" href="#">Logged in: {{ user }}</a>
+         </li>
+    {% endif %}
+{% endblock logged_in %}
 
 {% block script %} 
 <script src="{{ url_for('static', filename='js/trial3.js') }}" defer></script>
@@ -7,9 +28,22 @@
 {% block content %}
 
 <h1 id="main-header" data-next="{{ next_page }}">Star Wars Universe Planets</h1>
-<button class="btn btn-primary btn-success main-btn" id="prev">Prev Page</button>
-<button class="btn btn-primary btn-success main-btn" id="next">Next Page</button>
-<table class="tabel table-bordered table-striped main">
+<div class="buttons" id="buttons">
+    <form action="{{ url_for('index') }}" method="POST">
+        {% if previous_url %}
+            <input type="hidden" value="{{ previous_url }}" name="previous" id="previous">
+            <button type="submit" class="btn btn-primary btn-success main-btn">Prev Page</button>
+        {% endif %}
+    </form>
+    <form action="{{ url_for('index') }}" method="post">
+        {% if next_url %}
+            <input type="hidden" value="{{ next_url }}" name="next" id="next">
+            <button type="submit" class="btn btn-primary btn-success main-btn">Next Page</button>
+        {% endif %}
+    </form>
+</div>
+
+<table class="table table-bordered table-striped main">
     <thead>
         <tr>
             <th scope="col">Name</th>
@@ -19,37 +53,51 @@
             <th scope="col">surface water</th>
             <th scope="col">population(millions)</th>
             <th scope="col">residents</th>
+            {% if user %}
+                <th></th>
+            {% endif %}
         </tr>
     </thead>
     <tbody id="main-content">
-        {% for each_list in results %}
+        {% for each_list in planets_data %}
         <tr>
-            {% for each_element in each_list %}
-                {% if each_list.index(each_element) == each_list|length -1 %}
+{#            first (zeroth) element in each_list is the planet id which will be needed later for votes #}
+            {% for each_element in each_list[1:] %}
+                {% if each_list.index(each_element) == each_list|length-1 %}
                     {% if each_element[-1] != 0 %}
-                    <td data-residents="{{ each_element[0] }}"><button class="btn btn-secondary btn-sm">{{ each_element[-1] }}
-                            residents</button></td>
+                    <td data-residents="{{ each_element[0] }}" data-planet_id="{{ each_list[0] }}">
+                        <button class="btn btn-secondary btn-sm residents" data-toggle="modal" data-target="#my-modal">{{ each_element[-1] }}residents</button>
+                    </td>
+                        {% if user %}
+                            <td ><button class="btn btn-secondary btn-sm vote">Vote</button></td>
+                        {% endif %}
                     {% else %}
-                    <td>No known Residents</td>
+                    <td data-planet_id="{{ each_list[0] }}">No known Residents</td>
+                        {% if user %}
+                            <td ><button class="btn btn-secondary btn-sm vote">Vote</button></td>
+                        {% endif %}
                     {% endif %}
                 {% else %}
                 <td>{{ each_element }}</td>
                 {% endif %}
             {% endfor %}
-            <!-- <td><button class="btn btn-info">vote</button></td> -->
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
-<div id="modal-wrapper">
-    <div id="modal-content">
-        <div class="header-organizer">
-        <header id="modal-header"></header>
-        <span id="closeBtn">&times;</span>
-        </div>
-        <body id="modal-body">
-            <table class="tabel table-bordered table-striped main">
+{#    bootstrap modal#}
+    <div class="modal" tabindex="-1" role="dialog" id="my-modal">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modal-title">Modal title</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body" id="modal-body">
+            <table class="table table-bordered table-striped main">
                 <thead>
                     <tr>
                         <th scope="col">Name</th>
@@ -62,10 +110,41 @@
                         <th scope="col">gender</th>
                     </tr>
                 </thead>
-                <tbody id="results"></tbody>
+                <tbody id="residents_data"></tbody>
             </table>
-        </body>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
     </div>
-</div>
 
+    {#    bootstrap modal#}
+    <div class="modal" tabindex="-1" role="dialog" id="votes-data">
+      <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modal-title">Voting Statistics</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body" id="modal-body">
+            <table class="table table-bordered table-striped main">
+                <thead>
+                    <tr>
+                        <th scope="col">Planet</th>
+                        <th scope="col">votes</th>
+                    </tr>
+                </thead>
+                <tbody id="display-votes"></tbody>
+            </table>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
 {%endblock content%}
